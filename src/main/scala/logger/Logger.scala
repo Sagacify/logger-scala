@@ -27,7 +27,7 @@ class Logger(module: String) {
   private val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'")
   df.setTimeZone(tz)
 
-  private val coreFields : List[JField] = List(
+  private val coreFields: List[JField] = List(
     JField("name", JString(getClass.getPackage.getName)),
     JField("version", JString(getClass.getPackage.getImplementationVersion)),
     JField("module", JString(module)),
