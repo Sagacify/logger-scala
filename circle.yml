@@ -1,0 +1,22 @@
+machine:
+  environment:
+    COMPOSE_PROJECT_NAME: html2text
+  java:
+    version: openjdk8
+  services:
+    - docker
+
+dependencies:
+  override:
+    - wget https://raw.githubusercontent.com/Sagacify/ci-tools/master/run-sonar.sh
+    - chmod +x run-sonar.sh
+    - ./run-sonar.sh check
+    - ./run-sonar.sh install
+    - docker-compose --version
+  cache_directories:
+    - "~/.ivy2"
+
+test:
+  override:
+    - docker-compose run builder
+    - ./run-sonar.sh run

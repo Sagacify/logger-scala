@@ -9,7 +9,6 @@ Exception made of:
 
 # TODO:
 ## NOW
-* CI + Sonar integration
 * test integration into other projects. (publish on ivy?)
 
 ## At some point

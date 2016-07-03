@@ -1,0 +1,9 @@
+builder:
+  image: sagacify/docker-sbt:latest
+  command: sbt test
+  volumes:
+    - ~/.ivy2:/root/.ivy2
+    - ./src:/app/src
+    - ./project:/app/project
+    - ./build.sbt:/app/build.sbt
+    - ./target:/app/target
