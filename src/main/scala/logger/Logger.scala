@@ -4,21 +4,45 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
 
+import scala.util.Properties
+import scala.language.experimental.macros
+
 import org.json4s.jackson.JsonMethods.compact
 import org.json4s.JsonAST.JField
 import org.json4s.JsonAST.JInt
-import org.json4s.JsonAST.JNull
 import org.json4s.JsonAST.JObject
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JValue
 
-object Level {
-    val FATAL = 60
-    val ERROR = 50
-    val WARN = 40
-    val INFO = 30
-    val DEBUG = 20
-    val TRACE = 10
+final object Level {
+  private final val values = Map(
+    "FATAL" -> 60,
+    "ERROR" -> 50,
+    "WARN" -> 40,
+    "INFO" -> 30,
+    "DEBUG" -> 20,
+    "TRACE" -> 10
+  )
+
+  def apply(level: String): Int = try {
+    val iLevel = values.getOrElse(level.toUpperCase, level.toInt)
+    assert(iLevel >= 0)
+    iLevel
+  } catch {
+    case e: java.util.NoSuchElementException => {
+      throw new java.lang.Error(f"Neither log level nor int: $level")
+    }
+    case e: java.lang.AssertionError => {
+      throw new java.lang.Error(f"Log level must be positive: $level")
+    }
+  }
+
+  final val FATAL = values("FATAL")
+  final val ERROR = values("ERROR")
+  final val WARN = values("WARN")
+  final val INFO = values("INFO")
+  final val DEBUG = values("DEBUG")
+  final val TRACE = values("TRACE")
 }
 
 class Logger(module: String) {
@@ -27,72 +51,64 @@ class Logger(module: String) {
   private val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'")
   df.setTimeZone(tz)
 
+
+
+  def log(level: Int, event: String, data: JValue, meta: JValue): Unit =
+    Logger.log(
+      List(
+        JField("event", JString(event)),
+        JField("data", data),
+        JField("meta", meta),
+        JField("time", JString(df.format(new Date()))),
+        JField("module", JString(module)),
+        JField("level", JInt(level))
+      )
+    )
+
+  def fatal(event: String): Unit = macro LoggerMacro.log1
+  def fatal(event: String, data: JValue): Unit = macro LoggerMacro.log2
+  def fatal(event: String, data: JValue, meta: JValue): Unit =
+      macro LoggerMacro.log3
+
+  def error(event: String): Unit = macro LoggerMacro.log1
+  def error(event: String, data: JValue): Unit = macro LoggerMacro.log2
+  def error(event: String, data: JValue, meta: JValue): Unit =
+      macro LoggerMacro.log3
+
+  def warn(event: String): Unit = macro LoggerMacro.log1
+  def warn(event: String, data: JValue): Unit = macro LoggerMacro.log2
+  def warn(event: String, data: JValue, meta: JValue): Unit =
+      macro LoggerMacro.log3
+
+  def info(event: String): Unit = macro LoggerMacro.log1
+  def info(event: String, data: JValue): Unit = macro LoggerMacro.log2
+  def info(event: String, data: JValue, meta: JValue): Unit =
+      macro LoggerMacro.log3
+
+  def debug(event: String): Unit = macro LoggerMacro.log1
+  def debug(event: String, data: JValue): Unit = macro LoggerMacro.log2
+  def debug(event: String, data: JValue, meta: JValue): Unit =
+      macro LoggerMacro.log3
+
+  def trace(event: String): Unit = macro LoggerMacro.log1
+  def trace(event: String, data: JValue): Unit = macro LoggerMacro.log2
+  def trace(event: String, data: JValue, meta: JValue): Unit =
+      macro LoggerMacro.log3
+
+}
+
+object Logger {
+  val level = Properties.envOrNone("LOG_LEVEL").map(Level.apply).getOrElse(Level.INFO)
+
+  println(f"level: $level")
+
   private val coreFields: List[JField] = List(
     JField("name", JString(getClass.getPackage.getName)),
     JField("version", JString(getClass.getPackage.getImplementationVersion)),
-    JField("module", JString(module)),
     JField("hostname", JString(java.net.InetAddress.getLocalHost.getHostName()))
   )
 
-  private def log(level: Int, fields: List[JField]): Unit = {
-    println(
-      compact(
-        JObject(coreFields ++ List(
-          JField("level", JInt(level)),
-          JField("time", JString(df.format(new Date())))
-        ) ++ fields)
-      )
-    )
-  }
-
-  private def asFields(event: String, data: JValue, meta: JValue
-      ): List[JField] =
-    List(
-      JField("event", JString(event)),
-      JField("data", data),
-      JField("meta", meta)
-    )
-
-  final def fatal(
-      event: String,
-      data: JValue = JNull,
-      meta: JValue = JNull): Unit = {
-    log(Level.FATAL, asFields(event, data, meta))
-  }
-
-  final def error(
-      event: String,
-      data: JValue = JNull,
-      meta: JValue = JNull): Unit = {
-    log(Level.ERROR, asFields(event, data, meta))
-  }
-
-  final def warn(
-      event: String,
-      data: JValue = JNull,
-      meta: JValue = JNull): Unit = {
-    log(Level.WARN, asFields(event, data, meta))
-  }
-
-  final def info(
-      event: String,
-      data: JValue = JNull,
-      meta: JValue = JNull): Unit = {
-    log(Level.INFO, asFields(event, data, meta))
-  }
-
-  final def debug(
-      event: String,
-      data: JValue = JNull,
-      meta: JValue = JNull): Unit = {
-    log(Level.DEBUG, asFields(event, data, meta))
-  }
-
-  final def trace(
-      event: String,
-      data: JValue = JNull,
-      meta: JValue = JNull): Unit = {
-    log(Level.TRACE, asFields(event, data, meta))
+  def log(fields: List[JField]): Unit = {
+    println(compact(JObject(fields ++ coreFields)))
   }
 }
-

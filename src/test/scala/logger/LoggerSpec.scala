@@ -1,28 +1,42 @@
 package logger
 
+import org.scalatest.FlatSpec
+
 import Converter.extract
 import Converter.error2JsonInput
 import Converter.map2JValue
-// import org.json4s.JsonDSL._
-import org.scalatest.FlatSpec
 
 case class Poney(name: String, age: Int)
 
 class LoggerSpec extends FlatSpec  {
 
-  "A logger" should "be able to serialize errors" in {
+  def lazyString(): String = {
+    throw new java.lang.Exception("This should not have been evaluated.")
+    "Yipee!"
+  }
+
+  "A logger" should "lazy evaluate what it logs" in {
+    val l = new Logger("test")
+    l.trace(lazyString)
+
+    intercept[Exception] {
+      l.warn(lazyString)
+    }
+  }
+
+  it should "be able to serialize errors" in {
     val l = new Logger("test")
     val e = new java.lang.Exception("Excetpion test")
-    l.error("test", e)
+    l.warn("test", e)
   }
 
   it should "be able to serialize a Map " in {
     val l = new Logger("test")
-    l.fatal("test", Map("test" -> 5)) // age mental hein!
+    l.warn("test", Map("test" -> 5)) // age mental hein!
   }
 
   it should "be able to serialize case classes" in {
     val l = new Logger("test")
-    l.fatal("test", extract(Poney("Louis", 5))) // age mental hein!
+    l.warn("test", extract(Poney(name="Louis", age=5))) // age mental hein!
   }
 }
