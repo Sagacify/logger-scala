@@ -10,9 +10,12 @@ import scala.language.experimental.macros
 import org.json4s.jackson.JsonMethods.compact
 import org.json4s.JsonAST.JField
 import org.json4s.JsonAST.JInt
+import org.json4s.JsonAST.JNull
 import org.json4s.JsonAST.JObject
 import org.json4s.JsonAST.JString
 import org.json4s.JsonAST.JValue
+
+import Converter.error2JsonInput
 
 final object Level {
   private final val values = Map(
@@ -47,23 +50,8 @@ final object Level {
 
 class Logger(module: String) {
 
-  private val tz = TimeZone.getTimeZone("UTC")
-  private val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'")
-  df.setTimeZone(tz)
-
-
-
-  def log(level: Int, event: String, data: JValue, meta: JValue): Unit =
-    Logger.log(
-      List(
-        JField("event", JString(event)),
-        JField("data", data),
-        JField("meta", meta),
-        JField("time", JString(df.format(new Date()))),
-        JField("module", JString(module)),
-        JField("level", JInt(level))
-      )
-    )
+  final def log(level: Int, event: String, data: JValue, meta: JValue): Unit =
+    Logger.log(level, module, event, data, meta)
 
   def fatal(event: String): Unit = macro LoggerMacro.log1
   def fatal(event: String, data: JValue): Unit = macro LoggerMacro.log2
@@ -98,9 +86,18 @@ class Logger(module: String) {
 }
 
 object Logger {
-  val level = Properties.envOrNone("LOG_LEVEL").map(Level.apply).getOrElse(Level.INFO)
+  private val tz = TimeZone.getTimeZone("UTC")
+  private val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'")
+  df.setTimeZone(tz)
 
-  println(f"level: $level")
+  val level = try {
+    Properties.envOrNone("LOG_LEVEL").map(Level.apply).getOrElse(Level.INFO)
+  } catch {
+    case e: Throwable => {
+      log(Level.FATAL, "Logger", "LOG_LEVEL_FAIL", e)
+      throw e
+    }
+  }
 
   private val coreFields: List[JField] = List(
     JField("name", JString(getClass.getPackage.getName)),
@@ -108,7 +105,19 @@ object Logger {
     JField("hostname", JString(java.net.InetAddress.getLocalHost.getHostName()))
   )
 
-  def log(fields: List[JField]): Unit = {
-    println(compact(JObject(fields ++ coreFields)))
-  }
+  final def log(
+      level: Int,
+      module: String,
+      event: String,
+      data: JValue = JNull,
+      meta: JValue = JNull): Unit =
+    println(compact(JObject(List(
+        JField("event", JString(event)),
+        JField("data", data),
+        JField("meta", meta),
+        JField("time", JString(df.format(new Date()))),
+        JField("module", JString(module)),
+        JField("level", JInt(level))
+      ) ++ coreFields)))
+
 }
