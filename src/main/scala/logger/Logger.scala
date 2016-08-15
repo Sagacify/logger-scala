@@ -3,81 +3,47 @@ package com.sagacify.logging
 import scala.util.Properties
 import scala.language.experimental.macros
 
-import org.json4s.jackson.JsonMethods.compact
-import org.json4s.JsonAST.JField
-import org.json4s.JsonAST.JInt
-import org.json4s.JsonAST.JNull
-import org.json4s.JsonAST.JObject
-import org.json4s.JsonAST.JString
-import org.json4s.JsonAST.JValue
+import upickle.Js.Value
+import upickle.Js.Obj
+import upickle.Js.Str
+import upickle.Js.Num
+import upickle.Js.Null
+import upickle.json.write
 
 import Converter.error2JsonInput
 
-final object Level {
-  private final val values = Map(
-    "FATAL" -> 60,
-    "ERROR" -> 50,
-    "WARN" -> 40,
-    "INFO" -> 30,
-    "DEBUG" -> 20,
-    "TRACE" -> 10
-  )
-
-  def apply(level: String): Int = try {
-    val iLevel = values.getOrElse(level.toUpperCase, level.toInt)
-    assert(iLevel >= 0)
-    iLevel
-  } catch {
-    case e: java.util.NoSuchElementException => {
-      throw new java.lang.Error(f"Neither log level nor int: $level")
-    }
-    case e: java.lang.AssertionError => {
-      throw new java.lang.Error(f"Log level must be positive: $level")
-    }
-  }
-
-  final val FATAL = values("FATAL")
-  final val ERROR = values("ERROR")
-  final val WARN = values("WARN")
-  final val INFO = values("INFO")
-  final val DEBUG = values("DEBUG")
-  final val TRACE = values("TRACE")
-}
-
 class Logger(val module: String) {
 
-  final def log(level: Int, event: String, data: JValue, meta: JValue): Unit =
+  final def log(
+      level: Int,
+      event: String,
+      data: Value = Null,
+      meta: Value = Null): Unit =
     Logger.log(level, module, event, data, meta)
 
-  def fatal(event: String): Unit = macro LoggerMacro.log1
-  def fatal(event: String, data: JValue): Unit = macro LoggerMacro.log2
-  def fatal(event: String, data: JValue, meta: JValue): Unit =
-      macro LoggerMacro.log3
+  def fatal(event: String): Unit = macro Macro.log1
+  def fatal(event: String, data: Value): Unit = macro Macro.log2
+  def fatal(event: String, data: Value, meta: Value): Unit = macro Macro.log3
 
-  def error(event: String): Unit = macro LoggerMacro.log1
-  def error(event: String, data: JValue): Unit = macro LoggerMacro.log2
-  def error(event: String, data: JValue, meta: JValue): Unit =
-      macro LoggerMacro.log3
+  def error(event: String): Unit = macro Macro.log1
+  def error(event: String, data: Value): Unit = macro Macro.log2
+  def error(event: String, data: Value, meta: Value): Unit = macro Macro.log3
 
-  def warn(event: String): Unit = macro LoggerMacro.log1
-  def warn(event: String, data: JValue): Unit = macro LoggerMacro.log2
-  def warn(event: String, data: JValue, meta: JValue): Unit =
-      macro LoggerMacro.log3
+  def warn(event: String): Unit = macro Macro.log1
+  def warn(event: String, data: Value): Unit = macro Macro.log2
+  def warn(event: String, data: Value, meta: Value): Unit = macro Macro.log3
 
-  def info(event: String): Unit = macro LoggerMacro.log1
-  def info(event: String, data: JValue): Unit = macro LoggerMacro.log2
-  def info(event: String, data: JValue, meta: JValue): Unit =
-      macro LoggerMacro.log3
+  def info(event: String): Unit = macro Macro.log1
+  def info(event: String, data: Value): Unit = macro Macro.log2
+  def info(event: String, data: Value, meta: Value): Unit = macro Macro.log3
 
-  def debug(event: String): Unit = macro LoggerMacro.log1
-  def debug(event: String, data: JValue): Unit = macro LoggerMacro.log2
-  def debug(event: String, data: JValue, meta: JValue): Unit =
-      macro LoggerMacro.log3
+  def debug(event: String): Unit = macro Macro.log1
+  def debug(event: String, data: Value): Unit = macro Macro.log2
+  def debug(event: String, data: Value, meta: Value): Unit = macro Macro.log3
 
-  def trace(event: String): Unit = macro LoggerMacro.log1
-  def trace(event: String, data: JValue): Unit = macro LoggerMacro.log2
-  def trace(event: String, data: JValue, meta: JValue): Unit =
-      macro LoggerMacro.log3
+  def trace(event: String): Unit = macro Macro.log1
+  def trace(event: String, data: Value): Unit = macro Macro.log2
+  def trace(event: String, data: Value, meta: Value): Unit = macro Macro.log3
 
 }
 
@@ -90,7 +56,11 @@ object Logger {
     (mainClass.getSimpleName, mainClass.getPackage.getImplementationVersion)
   }
 
+  def getHostName: String = java.net.InetAddress.getLocalHost.getHostName()
+
   val (name, version) = getNameAndVersion
+  val hostname = getHostName
+
 
   val level = try {
     Properties.envOrNone("LOG_LEVEL").map(Level.apply).getOrElse(Level.INFO)
@@ -101,25 +71,30 @@ object Logger {
     }
   }
 
-  private val coreFields: List[JField] = List(
-    JField("name", JString(name)),
-    JField("version", JString(version)),
-    JField("hostname", JString(java.net.InetAddress.getLocalHost.getHostName()))
+  private val coreFields: List[(String, Value)] = List(
+    ("name", Str(name)),
+    ("version", Str(version)),
+    ("hostname", Str(hostname))
   )
 
   final def log(
       level: Int,
       module: String,
       event: String,
-      data: JValue = JNull,
-      meta: JValue = JNull): Unit =
-    println(compact(JObject(List(
-        JField("event", JString(event)),
-        JField("data", data),
-        JField("meta", meta),
-        JField("time", JString(java.time.Instant.now().toString())),
-        JField("module", JString(module)),
-        JField("level", JInt(level))
-      ) ++ coreFields)))
-
+      data: Value = Null,
+      meta: Value = Null): Unit =
+    println(
+      write(
+        Obj(
+          (List(
+            ("event", Str(event)),
+            ("data", data),
+            ("meta", meta),
+            ("time", Str(java.time.Instant.now().toString())),
+            ("module", Str(module)),
+            ("level", Num(level))
+          ) ++ coreFields): _*
+        )
+      )
+    )
 }

@@ -2,9 +2,8 @@ package com.acme
 
 import org.scalatest.FlatSpec
 
-import logger.Logging
+import com.sagacify.logging.Logging
 
-case class Poney(name: String, age: Int)
 
 class LoggingSpec extends FlatSpec with Logging {
 
