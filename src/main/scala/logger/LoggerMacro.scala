@@ -1,4 +1,4 @@
-package logger
+package com.sagacify.logging
 
 import scala.reflect.macros.blackbox.Context
 

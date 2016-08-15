@@ -1,4 +1,4 @@
-package logger
+package com.sagacify.logging
 
 import scala.util.Properties
 import scala.language.experimental.macros
