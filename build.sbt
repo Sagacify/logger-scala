@@ -1,13 +1,33 @@
-name := "logger"
-
-version := "0.1"
-
-scalaVersion := "2.11.8"
+scalaVersion in ThisBuild := "2.11.8"
 
 scalacOptions ++= Seq("-unchecked", "-feature", "-Ywarn-unused-import", "-Xlint")
 
-libraryDependencies ++= Seq(
-  "com.lihaoyi"     %% "upickle"        % "0.4.1",
-  "org.scala-lang"   % "scala-reflect"  % scalaVersion.value    % "provided",
-  "org.scalatest"   %% "scalatest"      % "2.2.6"               % "test"
-)
+scalaJSStage in Global := FastOptStage
+
+lazy val root = project.in(file(".")).
+  aggregate(loggerJS, loggerJVM).
+  settings(
+    publish := {},
+    publishLocal := {}
+  )
+
+lazy val logger = crossProject.in(file(".")).
+  settings(
+    name := "logger",
+    version := "0.1-SNAPSHOT",
+    libraryDependencies ++= Seq(
+      "org.scala-lang"   % "scala-reflect"  % scalaVersion.value,
+      "com.lihaoyi" %%% "upickle" % "0.4.1",
+      "org.scalatest" %%% "scalatest"      % "3.0.0" % "test"
+    )
+  ).
+  jvmSettings(
+    // Add JVM-specific settings here
+  ).
+  jsSettings(
+    // Add JS-specific settings here
+    scalaJSUseRhino in Global := false
+  )
+
+lazy val loggerJVM = logger.jvm
+lazy val loggerJS = logger.js
