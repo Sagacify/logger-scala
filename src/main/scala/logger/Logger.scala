@@ -1,9 +1,5 @@
 package logger
 
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.TimeZone
-
 import scala.util.Properties
 import scala.language.experimental.macros
 
@@ -96,10 +92,6 @@ object Logger {
 
   val (name, version) = getNameAndVersion
 
-  private val tz = TimeZone.getTimeZone("UTC")
-  private val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-  df.setTimeZone(tz)
-
   val level = try {
     Properties.envOrNone("LOG_LEVEL").map(Level.apply).getOrElse(Level.INFO)
   } catch {
@@ -125,7 +117,7 @@ object Logger {
         JField("event", JString(event)),
         JField("data", data),
         JField("meta", meta),
-        JField("time", JString(df.format(new Date()))),
+        JField("time", JString(java.time.Instant.now().toString())),
         JField("module", JString(module)),
         JField("level", JInt(level))
       ) ++ coreFields)))
