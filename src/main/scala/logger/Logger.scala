@@ -97,7 +97,7 @@ object Logger {
   val (name, version) = getNameAndVersion
 
   private val tz = TimeZone.getTimeZone("UTC")
-  private val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'")
+  private val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
   df.setTimeZone(tz)
 
   val level = try {
