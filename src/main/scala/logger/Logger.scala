@@ -44,7 +44,7 @@ final object Level {
   final val TRACE = values("TRACE")
 }
 
-class Logger(module: String) {
+class Logger(val module: String) {
 
   final def log(level: Int, event: String, data: JValue, meta: JValue): Unit =
     Logger.log(level, module, event, data, meta)
