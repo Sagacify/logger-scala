@@ -14,7 +14,7 @@ case class Poney(name: String, age: Int)
 
 class LoggerSpec extends FlatSpec {
 
-  def hideSTDOut(testCode: (ByteArrayOutputStream) => Unit) {
+  def hideSTDOut(testCode: (ByteArrayOutputStream) => Unit): Unit = {
     // this bypasses the stdout in the tests and makes it available
     val out = new ByteArrayOutputStream()
     val psOut = new PrintStream(out)
