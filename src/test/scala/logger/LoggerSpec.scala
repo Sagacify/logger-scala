@@ -46,25 +46,24 @@ class LoggerSpec extends FlatSpec  {
 
   it should "serialize date following ISO-8601 format" in {
     val log = new Logger("test")
-    val out = Option(new ByteArrayOutputStream())
-    val psOut = Option(new PrintStream(out.get))
     val oldOut = System.out
-    Console.setOut(psOut.get)
     try {
+      val out = new ByteArrayOutputStream()
+      val psOut = new PrintStream(out)
+      Console.setOut(psOut)
 
       log.warn("test")
-      val printed = out.get.toString
+      val printed = out.toString
       oldOut.println(printed)
 
       val pattern = Pattern.compile("\"time\":\"20\\d\\d-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d\\d\\dZ\"")
       val matcher = pattern.matcher(printed)
 
       assert(matcher.find())
+
+      out.close
+      psOut.close
     } finally {
-      if (out != None)
-        out.get.close
-      if (psOut != None)
-        psOut.get.close
       Console.setOut(oldOut)
     }
   }
