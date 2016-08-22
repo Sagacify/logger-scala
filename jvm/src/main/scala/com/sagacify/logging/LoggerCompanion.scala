@@ -55,7 +55,7 @@ object LoggerCompanion extends Companion[Js.Value]   {
          ("name",      Js.Str(name)),
          ("version",   Js.Str(version)),
          ("hostname",  Js.Str(hostname))
-       ): _*
+       ).filter{ case (k, v) => v != Js.Null}: _*
      )
    )
 }

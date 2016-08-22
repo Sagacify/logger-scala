@@ -18,7 +18,8 @@ lazy val logger = crossProject.in(file(".")).
     libraryDependencies ++= Seq(
       "org.scala-lang"   % "scala-reflect"  % scalaVersion.value,
       "com.lihaoyi" %%% "upickle" % "0.4.1",
-      "org.scalatest" %%% "scalatest"      % "3.0.0" % "test"
+      "org.scalatest" %%% "scalatest"      % "3.0.0" % "test",
+      "com.github.benhutchison" %%% "microjson" % "1.2" % "test"
     )
   ).
   jvmSettings(
