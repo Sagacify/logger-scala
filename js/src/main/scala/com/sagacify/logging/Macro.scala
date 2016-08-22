@@ -25,7 +25,11 @@ private object Macro {
 
     q"""
     if (com.sagacify.logging.LoggerCompanion.level <= $level) {
-      ${c.prefix}.log($level, $event, upickle.default.writeJs($data))
+      ${c.prefix}.log(
+        $level,
+        $event,
+        upickle.json.writeJs(
+          upickle.default.writeJs($data)).asInstanceOf[scala.scalajs.js.Any])
     }
     """
   }
@@ -41,8 +45,10 @@ private object Macro {
       ${c.prefix}.log(
         $level,
         $event,
-        upickle.default.writeJs($data),
-        upickle.default.writeJs($meta))
+        upickle.json.writeJs(
+          upickle.default.writeJs($data)).asInstanceOf[scala.scalajs.js.Any],
+        upickle.json.writeJs(
+          upickle.default.writeJs($meta)).asInstanceOf[scala.scalajs.js.Any])
     }
     """
   }
