@@ -1,44 +1,40 @@
-import bunyan from 'bunyan';
-import config from './config';
-import pkg from './package';
-import Logentries from 'le_node';
+var scalajs = require('./logger-opt.js');
 import BPromise from 'bluebird';
 import _ from 'lodash';
 
-let bunyanStream = {
-  stream: process.stdout
+const getFullErrorStack = ex => {
+  var ret = ex.stack || ex.toString();
+  if (ex.cause && typeof (ex.cause) === 'function') {
+    const cex = ex.cause();
+    if (cex) {
+      ret += '\nCaused by: ' + getFullErrorStack(cex);
+    }
+  }
+  return (ret);
 };
 
-if (config.logEntries.token) {
-  bunyanStream = Logentries.bunyanStream({
-    token: config.logEntries.token,
-    console: true
-  });
-}
-
-const mainLogger = bunyan.createLogger({
-  name: pkg.name,
-  version: pkg.version,
-  level: config.logLevel || 'info',
-  serializers: {
-    error: bunyan.stdSerializers.err
-  },
-  streams: [bunyanStream]
-});
-
-function buildLog (event, data = null, meta = null) {
-  if (data instanceof Error) {
-    data = bunyan.stdSerializers.err(data);
+const serializeError = potentialError => {
+  if (potentialError instanceof Error) {
+    if (!potentialError || !potentialError.stack) {
+      return potentialError;
+    }
+    var obj = {
+      message: potentialError.message,
+      name: potentialError.name,
+      stack: getFullErrorStack(potentialError),
+      code: potentialError.code,
+      signal: potentialError.signal
+    };
+    return obj;
   }
-
-  return { event, data, meta };
-}
+  return potentialError;
+};
 
 const methods = loggerRef => {
   const logMethods = {};
   ['debug', 'info', 'warn', 'error', 'fatal'].forEach(logLevel => {
     logMethods[logLevel] = (event, data, meta) => {
-      loggerRef[logLevel](buildLog(event, data, meta));
+      loggerRef[logLevel](event, serializeError(data), meta);
     };
   });
 
@@ -78,7 +74,7 @@ const methods = loggerRef => {
 };
 
 export const create = info => {
-  const loggerRef = mainLogger.child(info);
+  const loggerRef = scalajs.logger(info);
 
   return methods(loggerRef);
 };

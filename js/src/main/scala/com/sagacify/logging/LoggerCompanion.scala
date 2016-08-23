@@ -4,7 +4,7 @@ import scala.util.Properties
 
 import scala.scalajs.js
 import scala.scalajs.js.Any
-import scala.scalajs.js.Dynamic.{global => g}
+import scala.scalajs.js.Dynamic.global
 
 
 object LoggerCompanion extends Companion[js.Any]{
@@ -13,17 +13,26 @@ object LoggerCompanion extends Companion[js.Any]{
     js.eval("process.env.LOG_LEVEL || 'INFO'").toString)
 
   def getNameAndVersion: (String, String) = {
-    val pkg = g.require(g.process.env.PWD + "/package.json")
-    (pkg.name.toString, pkg.version.toString)
+    try {
+      val pkg = global.require(global.process.env.PWD + "/package.json")
+      (pkg.name.toString, pkg.version.toString)
+    } catch {
+      case e: Throwable => {
+        println("FAILED to get pkg " +
+          f"${global.process.env.PWD + "/package.json"} ${e.getMessage}")
+        ("NO_NAME", "NO_VERSION")
+      }
+    }
   }
 
   val (name, version) = getNameAndVersion
 
   val hostname = try {
-    g.os.hostname().toString()
+    val os = global.require("os")
+    os.hostname().toString()
   } catch {
     case e: Exception => {
-      println(f"Attempting to get hostname ${js.Dynamic.global.global.os}")
+      println(f"FAILED to get hostname ${e.getMessage}")
       "NO_HOSTNAME"
     }
   }

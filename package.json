@@ -4,8 +4,8 @@
   "description": "A basic Logger object that force a logging format, can use logentries",
   "main": "index.js",
   "scripts": {
-    "build": "babel --presets=es2015 --ignore='node_modules' src -d dist",
     "test": "LOG_LEVEL=fatal mocha --compilers js:babel-core/register",
+    "build": "sbt loggerJS/fullOptJS; echo \"var __ScalaJSEnv = { exportsNamespace: exports };\" > dist/logger-opt.js; sed 's/global:this;/global:this;g.require=require;/' js/target/scala-2.11/logger-opt.js >> dist/logger-opt.js; babel --presets=es2015 --ignore='node_modules' src -d dist",
     "2npm": "cp package.json dist; npm publish dist"
   },
   "repository": {

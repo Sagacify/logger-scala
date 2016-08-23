@@ -2,8 +2,6 @@ scalaVersion in ThisBuild := "2.11.8"
 
 scalacOptions ++= Seq("-unchecked", "-feature", "-Ywarn-unused-import", "-Xlint")
 
-scalaJSStage in Global := FastOptStage
-
 lazy val root = project.in(file(".")).
   aggregate(loggerJS, loggerJVM).
   settings(
