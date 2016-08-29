@@ -91,7 +91,7 @@ object Logger {
     (mainClass.getSimpleName, mainClass.getPackage.getImplementationVersion)
   }
 
-  // val (name, version) = getNameAndVersion
+  val (name, version) = getNameAndVersion
 
   val level = try {
     Properties.envOrNone("LOG_LEVEL").map(Level.apply).getOrElse(Level.INFO)
