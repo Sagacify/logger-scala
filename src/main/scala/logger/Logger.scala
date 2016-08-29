@@ -87,10 +87,11 @@ object Logger {
     val stack = Thread.currentThread.getStackTrace
     val mainStackElement = stack(stack.length - 1)
     val mainClass = Class.forName(mainStackElement.getClassName())
+    println(mainClass)
     (mainClass.getSimpleName, mainClass.getPackage.getImplementationVersion)
   }
 
-  val (name, version) = getNameAndVersion
+  // val (name, version) = getNameAndVersion
 
   val level = try {
     Properties.envOrNone("LOG_LEVEL").map(Level.apply).getOrElse(Level.INFO)
